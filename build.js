@@ -610,7 +610,6 @@ var Youtube = function () {
             event = event ? event : window.event;
             var translate = event.pageX - this.touchStartCoords;
             this.results.style.transform = 'translate3d(' + (_app.itemService.translate + translate) + 'px,0,0)';
-            event.preventDefault();
         }
 
         // Method for detection end of swipe

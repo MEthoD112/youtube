@@ -224,7 +224,6 @@ export default class Youtube {
         event = event ? event : window.event;
         const translate = event.pageX - this.touchStartCoords;
         this.results.style.transform = `translate3d(${itemService.translate + translate}px,0,0)`;
-        event.preventDefault();
     }
 
     // Method for detection end of swipe
