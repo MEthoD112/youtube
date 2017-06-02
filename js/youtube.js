@@ -23,11 +23,12 @@ export default class Youtube {
         });
 
         // Detection of mouseup and touchend events
-        this.addMultipleListeners(body, 'mouseup touchend', (event) => {
+        this.addMultipleListeners(window, 'mouseup touchend', (event) => {
             const target = event.target.tagName.toUpperCase();
             if (target === 'INPUT' || target === 'BUTTON') {
                 return;
             }
+            //console.log(event.target);
             this.swipeEnd();
         });
 
@@ -126,7 +127,7 @@ export default class Youtube {
             pageToken: itemService.token,
             part: 'snippet',
             type: 'video',
-            q: encodeURIComponent(itemService.search).replace(/%20/g, '+'),
+            q: itemService.search,
             maxResults: 16,
             order: 'viewCount'
         }).then((response) => {
@@ -230,21 +231,34 @@ export default class Youtube {
     swipeEnd(event) {
         event = event ? event : window.event;
         event = ('changedTouches' in event) ? event.changedTouches[0] : event;
-        this.touchEndCoords = event.pageX - this.touchStartCoords;
+
+        if (!this.touchStartCoords) {
+            this.touchEndCoords = 0;
+        } else {
+            this.touchEndCoords = event.pageX - this.touchStartCoords;
+        }
+        
         this.direction = (this.touchEndCoords < 0) ? 'left' : 'right';
-        if (Math.abs(this.touchEndCoords) >= 1) {
-            switch (this.direction) {
+        if (Math.abs(this.touchEndCoords) <= 70) {
+            this.direction = 'current'
+        }
+           
+        switch (this.direction) {
             case 'left':
                 this.swipeLeft();
                 break;
             case 'right':
                 this.swipeRight();
                 break;
+            case 'current':
+                this.results.style.transform = `translate3d(${itemService.translate}px,0,0)`;
+                break;
             default:
                 break;    
-            }
         }
-        this.touchStartCoords = null;
+        
+        this.touchStartCoords = 0;
+        this.touchEndCoords = 0;
     }
 
     // Method for adding multiple events

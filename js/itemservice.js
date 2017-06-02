@@ -36,12 +36,11 @@ export default class ItemService {
                 this.container.style.width = '320px';
             }
             this.currentPage = 1;
-
-            // request for items
+            
             gapi.client.youtube.search.list({
                 part: 'snippet',
                 type: 'video',
-                q: encodeURIComponent(this.search).replace(/%20/g, '+'),
+                q: this.search,
                 maxResults: 20,
                 order: 'viewCount'
             }).then((response) => {
@@ -71,7 +70,6 @@ export default class ItemService {
                 });
             });
             this.idsForStatistics = '';
-            document.getElementById('search').value = '';
         });
     }
 }

@@ -1,5 +1,5 @@
 body { 
-	margin: 1rem;
+	margin: 0;
 	box-sizing: border-box;
 	background: #555 url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAB9JREFUeNpi/P//PwM6YGLAAuCCmpqacC2MRGsHCDAA+fIHfeQbO8kAAAAASUVORK5CYII=);
 }
@@ -10,7 +10,6 @@ body .ui-page {
 
 .search-container {
 	display: flex;
-	/* margin-bottom:30px; */
 	max-width: 1400px;
 	margin: 0 auto 30px;
 }
@@ -30,7 +29,7 @@ body .ui-page {
 	border-radius: 10px;
 	box-shadow: inset 0 0 0 50px #fff;
 	outline:none;
-	font-family: 'Chewy', cursive;
+	font-family: 'Open Sans Condensed', sans-serif;
 }
 
 .search-container .button button {
@@ -99,8 +98,11 @@ body .ui-page {
   	width: 100%;
   	text-align: center;
   	border-radius: 5px;
-  	font-family: 'Chewy', cursive;
+  	font-family: 'Open Sans Condensed', sans-serif;
   	font-size: 19px;
+  	font-weight: bold;
+  	opacity: 0.82;
+  	transform: rotate(3deg) skew(3deg);
 }
 
 .results .item .header:hover {
@@ -114,22 +116,17 @@ body .ui-page {
 
 .item .main-content {
 	padding: 15px 30px;
-	/* background-color: white; */
-}
-
-.main-content {}
-
-.fa {
-	/* float: left; */
 }
 
 .item .description {
 	text-align: center;
-	font-size: 16px;
+	font-size: 17px;
 	color: #fff;
 	font-style: italic;
 	font-weight: 700;
 	background: #167ac6;
+	font-family: 'Open Sans Condensed', sans-serif;
+	letter-spacing: 1px;
 }
 
 .item .author {
@@ -148,11 +145,8 @@ body .ui-page {
 
 .item .views, .item .likes, .item .dislikes, .item .date {
 	display: inline-block;
-	/* text-align: left; */
 	font-size: 24px;
 	margin-left: 33px;
-	/* margin-top: 15px; */
-	/* margin-bottom: 15px; */
 	font-family: 'Baloo', cursive;
 	font-weight: 400;
 	color: #167ac6;
@@ -170,8 +164,8 @@ body .ui-page {
 .paging label input {
 	border-radius: 20px;
 	border: none;
-	margin-left: 5px;
-	width: 45px;
+	margin-left: 3px;
+	width: 42px;
 	height: 35px;
 	background: #167ac6;
 	outline: none;

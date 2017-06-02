@@ -4,7 +4,7 @@ export default class Dom {
         const string =
 			'<form class="search-container">' +
 				'<div class="input">' +
-					'<input type="text" id="search" class="search" maxLength="30" placeholder="Search request">' +
+					'<input type="text" id="search" class="search" placeholder="Search request">' +
 				'</div>' +
 				'<div class="button">' +
 					'<button type="submit" id="submit" disabled>Search</button>' +

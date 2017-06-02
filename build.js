@@ -155,7 +155,7 @@ var DomService = function () {
                 var title = item.snippet.title;
                 var source = item.snippet.thumbnails.medium.url;
                 var description = item.snippet.description.slice(0, 100);
-                var channelTitle = item.snippet.channelTitle.slice(0, 14);
+                var channelTitle = item.snippet.channelTitle.slice(0, 12);
                 var linkChannel = 'https://www.youtube.com/channel/' + item.snippet.channelId;
                 var date = item.snippet.publishedAt.slice(0, 10);
 
@@ -251,7 +251,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var Dom = function Dom() {
 	_classCallCheck(this, Dom);
 
-	var string = '<form class="search-container">' + '<div class="input">' + '<input type="text" id="search" class="search" maxLength="30" placeholder="Search request">' + '</div>' + '<div class="button">' + '<button type="submit" id="submit" disabled>Search</button>' + '</div>' + '</form>' + '<main class="container carousel-container" id="container">' + '<ul id="results" class="results carousel trans-animate"></ul>' + '</main>' + '<div class="paging" id="paging"></div>';
+	var string = '<form class="search-container">' + '<div class="input">' + '<input type="text" id="search" class="search" placeholder="Search request">' + '</div>' + '<div class="button">' + '<button type="submit" id="submit" disabled>Search</button>' + '</div>' + '</form>' + '<main class="container carousel-container" id="container">' + '<ul id="results" class="results carousel trans-animate"></ul>' + '</main>' + '<div class="paging" id="paging"></div>';
 
 	document.body.insertAdjacentHTML('beforeend', string);
 };
@@ -313,11 +313,10 @@ var ItemService = function ItemService() {
         }
         _this.currentPage = 1;
 
-        // request for items
         gapi.client.youtube.search.list({
             part: 'snippet',
             type: 'video',
-            q: encodeURIComponent(_this.search).replace(/%20/g, '+'),
+            q: _this.search,
             maxResults: 20,
             order: 'viewCount'
         }).then(function (response) {
@@ -347,7 +346,6 @@ var ItemService = function ItemService() {
             });
         });
         _this.idsForStatistics = '';
-        document.getElementById('search').value = '';
     });
 };
 
@@ -397,11 +395,12 @@ var Youtube = function () {
         });
 
         // Detection of mouseup and touchend events
-        this.addMultipleListeners(body, 'mouseup touchend', function (event) {
+        this.addMultipleListeners(window, 'mouseup touchend', function (event) {
             var target = event.target.tagName.toUpperCase();
             if (target === 'INPUT' || target === 'BUTTON') {
                 return;
             }
+            //console.log(event.target);
             _this.swipeEnd();
         });
 
@@ -506,7 +505,7 @@ var Youtube = function () {
                 pageToken: _app.itemService.token,
                 part: 'snippet',
                 type: 'video',
-                q: encodeURIComponent(_app.itemService.search).replace(/%20/g, '+'),
+                q: _app.itemService.search,
                 maxResults: 16,
                 order: 'viewCount'
             }).then(function (response) {
@@ -621,21 +620,34 @@ var Youtube = function () {
         value: function swipeEnd(event) {
             event = event ? event : window.event;
             event = 'changedTouches' in event ? event.changedTouches[0] : event;
-            this.touchEndCoords = event.pageX - this.touchStartCoords;
-            this.direction = this.touchEndCoords < 0 ? 'left' : 'right';
-            if (Math.abs(this.touchEndCoords) >= 1) {
-                switch (this.direction) {
-                    case 'left':
-                        this.swipeLeft();
-                        break;
-                    case 'right':
-                        this.swipeRight();
-                        break;
-                    default:
-                        break;
-                }
+
+            if (!this.touchStartCoords) {
+                this.touchEndCoords = 0;
+            } else {
+                this.touchEndCoords = event.pageX - this.touchStartCoords;
             }
-            this.touchStartCoords = null;
+
+            this.direction = this.touchEndCoords < 0 ? 'left' : 'right';
+            if (Math.abs(this.touchEndCoords) <= 70) {
+                this.direction = 'current';
+            }
+
+            switch (this.direction) {
+                case 'left':
+                    this.swipeLeft();
+                    break;
+                case 'right':
+                    this.swipeRight();
+                    break;
+                case 'current':
+                    this.results.style.transform = 'translate3d(' + _app.itemService.translate + 'px,0,0)';
+                    break;
+                default:
+                    break;
+            }
+
+            this.touchStartCoords = 0;
+            this.touchEndCoords = 0;
         }
 
         // Method for adding multiple events

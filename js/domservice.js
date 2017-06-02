@@ -22,7 +22,7 @@ export default class DomService {
             const title = item.snippet.title;
             const source = item.snippet.thumbnails.medium.url;
             let description = item.snippet.description.slice(0, 100);
-            const channelTitle = item.snippet.channelTitle.slice(0, 14);
+            const channelTitle = item.snippet.channelTitle.slice(0, 12);
             const linkChannel = 'https://www.youtube.com/channel/' + item.snippet.channelId;
             const date = item.snippet.publishedAt.slice(0, 10);
 
