@@ -1,20 +1,26 @@
-import { itemService, domService  } from './app';
+import { itemService,
+         domService,
+         itemWidth,
+         itemRightMargin,
+         youtubeApiKey,
+         minSwipeLength } from './app';
 
-export default class Youtube {
+export class Youtube {
     constructor() {
         const paging = document.getElementById('paging');
         this.results = document.getElementById('results');
         const body = document.body;
         this.snippet = null;
         this.statistics = null;
+        this.container = document.getElementById('container');
 
         // Detection of mousedown and touchstart events
         this.addMultipleListeners(body, 'mousedown touchstart', (event) => {
             const target = event.target.tagName.toUpperCase();
-            if (target === 'INPUT' || target === 'BUTTON') {
-                return;
+            if (target !== 'INPUT' && target !== 'BUTTON') {
+                body.style.cursor = 'pointer';
+                this.swipeStart();
             }
-            this.swipeStart();
         });
 
         // Detection of mousemove and touchmove events
@@ -25,84 +31,64 @@ export default class Youtube {
         // Detection of mouseup and touchend events
         this.addMultipleListeners(window, 'mouseup touchend', (event) => {
             const target = event.target.tagName.toUpperCase();
-            if (target === 'INPUT' || target === 'BUTTON') {
-                return;
+            if (target !== 'INPUT' && target !== 'BUTTON') {
+                body.style.cursor = 'default';
+                this.swipeEnd();
             }
-            //console.log(event.target);
-            this.swipeEnd();
         });
 
         // Detection mousedown of tooltip
         paging.addEventListener('mousedown', (event) => {
-            if (event.target.tagName.toUpperCase() !== 'INPUT') {
-                return;
+            if (event.target.tagName.toUpperCase() === 'INPUT') {
+                event.target.value = event.target.id;
             }
-            event.target.value = event.target.id;
         });
 
         // Detection mouseout of tooltip
         paging.addEventListener('mouseout', (event) => {
-            if (event.target.tagName.toUpperCase() !== 'INPUT') {
-                return;
-            }
-            if (event.target.style.background !== 'red') {
+            if (!event.target.hasAttribute('class', 'active')) {
                 event.target.value = '';
             }
         });
 
         // Click event for pagination
         paging.addEventListener('click', (event) => {
-            if (event.target.tagName.toUpperCase() !== 'INPUT') {
-                return;
+            if (event.target.tagName.toUpperCase() === 'INPUT') {
+                const itemsPerPage = itemService.itemsPerPage;
+                const page = +event.target.id;
+                const translate = -(itemsPerPage * itemWidth) * (page - 1);
+                const length = itemService.snippet.length;
+
+                if (-translate >= length * itemWidth) {
+                    return;
+                }
+
+                itemService.translate = -(itemService.itemsPerPage * itemWidth) * (page - 1);
+                itemService.currentPage = page;
+
+                this.results.style.transform = `translate3d(${itemService.translate}px,0,0)`;
+
+                const quadrupleItemsForPage = itemsPerPage * 4;
+
+                if (-itemService.translate >= (length - quadrupleItemsForPage) * itemWidth - itemRightMargin) {
+                    this.afterLoadFromYoutubeApi();
+                }
+
+                domService.clearPaging();
+                domService.displayPaging();
+                domService.showActivePaging();
             }
-
-            const itemsPerPage = itemService.itemsPerPage;
-            const page = +event.target.id;
-            const translate = -(itemsPerPage * 360) * (page - 1);
-            const length = itemService.snippet.length;
-
-            if (-translate >= length * 360) {
-                return;
-            }
-
-            itemService.translate = -(itemService.itemsPerPage * 360) * (page - 1);
-            itemService.currentPage = page;
-
-            this.results.style.transform = `translate3d(${itemService.translate}px,0,0)`;
-
-            const quadrupleItemsForPage = itemsPerPage * 4;
-
-            if (-itemService.translate >= (length - quadrupleItemsForPage) * 360 - 40) {
-                this.afterLoadFromYoutubeApi();
-            }
-
-            domService.clearPaging();
-            domService.displayPaging();
-            domService.showActivePaging();
         });
 
         // Event for detection resizing
         window.onresize = () => {
             const screenWidth = document.documentElement.clientWidth;
-            const container = document.getElementById('container');
+            itemService.detectItemsPerPage(screenWidth, itemService.itemsPerPage, this.container)
 
-            if (screenWidth >= 1500) {
-                itemService.itemsPerPage = 4;
-                container.style.width = '1400px';
-            } else if (screenWidth >= 1120) {
-                itemService.itemsPerPage = 3;
-                container.style.width = '1040px';
-            } else if (screenWidth >= 750) {
-                itemService.itemsPerPage = 2;
-                container.style.width = '680px';
-            } else {
-                itemService.itemsPerPage = 1;
-                container.style.width = '320px';
-            }
             if (itemService.snippet) {
                 const translate = -itemService.translate;
                 const itemsPerPage = itemService.itemsPerPage;
-                itemService.currentPage = Math.ceil(translate / (360 * itemsPerPage) + 1);
+                itemService.currentPage = Math.ceil(translate / (itemWidth * itemsPerPage) + 1);
                 domService.clearPaging();
                 domService.displayPaging();
                 domService.showActivePaging();
@@ -111,11 +97,10 @@ export default class Youtube {
 
         // Event to init app
         window.onload = () => {
-            gapi.client.setApiKey('AIzaSyDVrg2_HtQOEIOk_jdcHnIsH99xRiIrge8');
+            gapi.client.setApiKey(youtubeApiKey);
             gapi.client.load('youtube', 'v3', () => {
                 const button = document.getElementById('submit');
                 button.removeAttribute('disabled');
-                console.log('api is ready');
             });
         };
     }
@@ -137,13 +122,12 @@ export default class Youtube {
             itemService.token = results.nextPageToken;
             itemService.idsForStatistics = '';
 
+            const ids = [];
             results.items.forEach((item) => {
-                itemService.idsForStatistics += item.id.videoId + ',';
+                ids.push(item.id.videoId);
             });
 
-            const ids = itemService.idsForStatistics;
-            // Remove the last comma
-            itemService.idsForStatistics = ids.slice(0, ids.length - 1);
+            itemService.idsForStatistics = ids.join(',');
 
             // Request for statistics
             gapi.client.youtube.videos.list({
@@ -159,11 +143,11 @@ export default class Youtube {
 
     swipeLeft() {
         const itemsPerPage = itemService.itemsPerPage;
-        const translateLX = -(itemsPerPage * 360);
+        const translateLX = -(itemsPerPage * itemWidth);
         const translate = itemService.translate + translateLX;
         const length = itemService.snippet.length;
 
-        if (-translate >= length * 360) {
+        if (-translate >= length * itemWidth) {
             this.results.style.transform = `translate3d(${itemService.translate}px,0,0)`;
             return;
         }
@@ -175,7 +159,7 @@ export default class Youtube {
 
         const doubleItemsForPage = itemsPerPage * 2;
 
-        if (-itemService.translate >= (length - doubleItemsForPage) * 360 - 40) {
+        if (-itemService.translate >= (length - doubleItemsForPage) * itemWidth - itemRightMargin) {
             this.afterLoadFromYoutubeApi();
         }
         domService.clearPaging();
@@ -185,13 +169,13 @@ export default class Youtube {
 
     swipeRight() {
         if (itemService.translate >= 0) {
-            this.results.style.transform = 'translate3d(0px,0,0)';
+            this.results.style.transform = `translate3d(0, 0, 0)`;
             itemService.translate = 0;
             return;
         }
 
         if (itemService.currentPage === 2) {
-            this.results.style.transform = 'translate3d(0px,0,0)';
+            this.results.style.transform = `translate3d(0, 0, 0)`;
             itemService.translate = 0;
             itemService.currentPage = 1;
             domService.clearPaging();
@@ -200,7 +184,7 @@ export default class Youtube {
             return;
         }
 
-        const translateRX = itemService.itemsPerPage * 360;
+        const translateRX = itemService.itemsPerPage * itemWidth;
         itemService.translate += translateRX;
         this.results.style.transform = `translate3d(${itemService.translate}px,0,0)`;
 
@@ -220,10 +204,11 @@ export default class Youtube {
 
     // Method for detection move of swipe
     swipeMove(event) {
-        if (!this.touchStartCoords) return;
-        event = event ? event : window.event;
-        const translate = event.pageX - this.touchStartCoords;
-        this.results.style.transform = `translate3d(${itemService.translate + translate}px,0,0)`;
+        if (this.touchStartCoords) {
+            event = event ? event : window.event;
+            const translate = event.pageX - this.touchStartCoords;
+            this.results.style.transform = `translate3d(${itemService.translate + translate}px,0,0)`;
+        }  
     }
 
     // Method for detection end of swipe
@@ -238,7 +223,7 @@ export default class Youtube {
         }
         
         this.direction = (this.touchEndCoords < 0) ? 'left' : 'right';
-        if (Math.abs(this.touchEndCoords) <= 70) {
+        if (Math.abs(this.touchEndCoords) <= minSwipeLength) {
             this.direction = 'current'
         }
            
@@ -255,7 +240,6 @@ export default class Youtube {
             default:
                 break;    
         }
-        
         this.touchStartCoords = 0;
         this.touchEndCoords = 0;
     }

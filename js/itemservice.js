@@ -1,42 +1,36 @@
-import { domService } from './app';
+import { domService,
+         screenWidthForFourItems, 
+         screenWidthForTreeItems, 
+         screenWidthForTwoItems,
+         containerWidthForFourItems,
+         containerWidthForTreeItems,
+         containerWidthForTwoItems,
+         containerWidthForOneItem } from './app';
 
 // Class for primary loading data and working with data
-export default class ItemService {
+export class ItemService {
     constructor() {
         // Collection of ids for futher request for statistics
-        this.idsForStatistics = '';
+        this.idsForStatistics = null;
         this.results = document.getElementById('results');
         this.sumbit = document.getElementById('submit');
         this.snippet = null;
         this.statistics = null;
-        this.container = document.getElementById('container');
 
         // Event for primary loading data
         this.sumbit.addEventListener('click', (event) => {
             event.preventDefault();
             domService.clearItems();
             domService.clearPaging();
-            this.results.style.transform = `translate3d(${0}px,0,0)`;
+            this.results.style.transform = `translate3d(0, 0, 0)`;
             this.screenWidth = document.documentElement.clientWidth;
+            this.container = document.getElementById('container');
             this.search = document.getElementById('search').value;
             this.translate = 0;
-
-            // Detection screen width and setting count of items for page
-            if (this.screenWidth >= 1500) {
-                this.itemsPerPage = 4;
-                this.container.style.width = '1400px';
-            } else if (this.screenWidth >= 1120) {
-                this.itemsPerPage = 3;
-                this.container.style.width = '1040px';
-            } else if (this.screenWidth >= 750) {
-                this.itemsPerPage = 2;
-                this.container.style.width = '680px';
-            } else {
-                this.itemsPerPage = 1;
-                this.container.style.width = '320px';
-            }
             this.currentPage = 1;
-            
+            const itemsPerPage = null;
+            this.detectItemsPerPage(this.screenWidth, itemsPerPage, this.container);
+
             gapi.client.youtube.search.list({
                 part: 'snippet',
                 type: 'video',
@@ -48,13 +42,14 @@ export default class ItemService {
                 this.snippet = results.items;
                 this.token = results.nextPageToken;
 
+                const ids = [];
                 results.items.forEach((item) => {
-                    this.idsForStatistics += item.id.videoId + ',';
+                    ids.push(item.id.videoId);
                 });
 
-                const ids = this.idsForStatistics;
+                //const ids = this.idsForStatistics;
                 // Remove the last comma
-                this.idsForStatistics = ids.slice(0, ids.length - 1);
+                this.idsForStatistics = ids.join(',');
 
                 // request for statistics
                 gapi.client.youtube.videos.list({
@@ -68,8 +63,25 @@ export default class ItemService {
                     domService.displayPaging();
                     domService.showActivePaging();
                 });
-            });
+            }); 
             this.idsForStatistics = '';
         });
+    }
+
+    detectItemsPerPage(screenWidth, itemsPerPage, container) {
+        // Detection screen width and setting count of items for page
+        if (screenWidth >= screenWidthForFourItems) {
+            this.itemsPerPage = 4;
+            container.style.width = containerWidthForFourItems;
+        } else if (screenWidth >= screenWidthForTreeItems) {
+            this.itemsPerPage = 3;
+            container.style.width = containerWidthForTreeItems;
+        } else if (screenWidth >= screenWidthForTwoItems) {
+            this.itemsPerPage = 2;
+            container.style.width = containerWidthForTwoItems;
+        } else {
+            this.itemsPerPage = 1;
+            container.style.width = containerWidthForOneItem;
+        }
     }
 }
